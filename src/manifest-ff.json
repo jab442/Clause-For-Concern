@@ -5,6 +5,7 @@
     "version": "5.1.1",
     "homepage_url": "https://tosdr.org",
     "permissions": ["tabs", "storage"],
+    "host_permissions": ["http://localhost/*", "https://*/*"],
     "background": {
         "scripts": ["scripts/background.js"]
     },

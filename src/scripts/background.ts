@@ -1,5 +1,4 @@
 // import * as Sentry from '@sentry/browser';
-import { aiApiKey } from "./api";
 
 interface DatabaseEntry {
     id: string;
@@ -331,60 +330,75 @@ chrome.runtime.onStartup.addListener(function () {
 });
 checkDonationReminder();
 
-//setAiApiKey();
+// Streaming configuration
+// For local development, use: 'http://localhost:3000/api/scan'
+// For production, replace with your actual server URL
+const SERVER_ENDPOINT = 'http://localhost:3000/api/scan';
 
-let aiModel = "gpt-4.1";
-
-/*
-function aiError(message = 'An error occurred. Please try again later.', title = 'Error') {
-    chrome.notifications.create({
-        type: 'basic',
-        iconUrl: chrome.runtime.getURL('icons/chip-ai-svgrepo-com.svg'),
-        title,
-        message
-    });
-}
-*/
 chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
     if (request.type === 'summarize_terms') {
-            if (!request.aiApiKey) {
-                //aiError('No API key found. Please set your OpenAI API key in the extension settings.');
-                console.error('No API key found in request');
-                return;
-            }
-            const prompt = request.prompt.aiPrompt || 'Summarize the terms of service for the following domain: ';
-            console.log('Summarizing terms for domain:', request.domain, 'with prompt:', prompt);
+            console.log('Summarizing terms for domain:', request.domain);
+            
             try {
-                const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                // Call your server endpoint that streams the response
+                const response = await fetch(SERVER_ENDPOINT, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${request.aiApiKey}`
                     },
                     body: JSON.stringify({
-                        model: aiModel,
-                        messages: [
-                            { role: "system", content: `
-                                
-                                IMPORTANT: Format your response as clean HTML with proper paragraph tags (<p>), headers (<h4>, <h5>), and lists (<ul>, <li>) for better readability. Do not include <html>, <head>, or <body> tags - just the content markup.
-                            `},
-                            { role: "user", content: prompt }
-                        ],
-                        temperature: 0.5,
+                        url: `https://${request.domain}`
                     })
                 });
-                const data = await response.json();
-                if (data.error) {
-                    chrome.storage.local.set({ [`ai_summary_${request.domain}`]: data.error.message });;
-                    return;
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Server error response:', errorText);
+                    throw new Error(`Server error (${response.status}): ${errorText}`);
                 }
-                const aiLastResponse = data.choices[0].message.content;
-                chrome.storage.local.set({ [`ai_summary_${request.domain}`]: aiLastResponse });
+
+                // Read the stream
+                const reader = response.body?.getReader();
+                if (!reader) {
+                    throw new Error('Response body is not readable');
+                }
+
+                const decoder = new TextDecoder();
+                let accumulatedText = '';
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    
+                    // Decode the chunk and append to accumulated text
+                    const chunk = decoder.decode(value, { stream: true });
+                    accumulatedText += chunk;
+                    
+                    // Update storage with the accumulated text so far (this triggers UI updates)
+                    chrome.storage.local.set({ 
+                        [`ai_summary_${request.domain}`]: accumulatedText 
+                    });
+                }
+
+                // Final update with complete text
+                chrome.storage.local.set({ 
+                    [`ai_summary_${request.domain}`]: accumulatedText 
+                });
+
             } catch (error) {
                 let errorMsg = 'Unknown error';
                 if (typeof error === 'string') errorMsg = error;
                 else if (error && typeof error === 'object' && 'message' in error) errorMsg = (error as any).message;
                 console.error('Error: ' + errorMsg);
+                
+                // Provide helpful error message
+                const helpMessage = errorMsg.includes('Failed to fetch') 
+                    ? `<h4>⚠️ Server Not Available</h4><p>The AI analysis server is not running. To use this feature:</p><ul><li>Start the server: <code>node server.js</code> on port 3000</li><li>Or update SERVER_ENDPOINT in background.ts to your deployed server URL</li></ul><p>Error details: ${errorMsg}</p>`
+                    : `<h4>❌ Error</h4><p>${errorMsg}</p>`;
+                
+                chrome.storage.local.set({ 
+                    [`ai_summary_${request.domain}`]: helpMessage
+                });
             }
     }
 });

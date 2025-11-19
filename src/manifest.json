@@ -6,6 +6,7 @@
     "key":"MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnrc4je3e1CYbQSXeiCGRLUnWjrz57VpAjLK7s6w0BTjRbTUmQ64fcNVAaMPRedPwT4p/r0lyldnghiJMcGMf1ZhgV1yM1bnNSb6onmW4PrPSk3imoZnoeIr6r7jusk/B09j+o14jU9qc/0skv1UCHX/gx4gh3E0grEy9bQvOVyQX/yslWnuxH8i2a2tEiYI/hlnLmOmAGi4VKgEE9xm8M+CNjDqOAgeIZe2fmMvVY17s3LQQ7Psk5p1LqGIJuNEdeXlqBXSPzh0k+VmM5bfCE5FDiH0pkvGkBgY+3jc+LaL19QdMfCc0NpZacbgw/16AFKDFtx8OFRuYdAxT2gB+hwIDAQAB",
     "homepage_url": "https://tosdr.org",
     "permissions": ["tabs", "storage"],
+    "host_permissions": ["http://localhost/*", "https://*/*"],
     "background": {
         "service_worker": "scripts/background.js"
     },
