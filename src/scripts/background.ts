@@ -197,9 +197,10 @@ async function checkDonationReminder() {
     // Retrieve the value from storage and ensure it's a boolean
     const data = await chrome.storage.local.get('displayDonationReminder');
     const dDR = Boolean(data.displayDonationReminder?.active);
+    const allowedPlattform = Boolean(data.displayDonationReminder?.allowedPlattform);
     if (
         dDR !== true &&
-        data.displayDonationReminder.allowedPlattform === true
+        allowedPlattform === true
     ) {
         const currentDate = new Date();
         const currentYear = currentDate.getFullYear();

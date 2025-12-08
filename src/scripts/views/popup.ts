@@ -50,7 +50,7 @@ async function donationReminderLogic(): Promise<void> {
                 },
                 displayDonationReminder: {
                     active: false,
-                    allowedPlattform: result.displayDonationReminder.allowedPlattform,
+                    allowedPlattform: result.displayDonationReminder?.allowedPlattform ?? false,
                 },
             });
 
@@ -402,7 +402,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (sourceButton) {
         sourceButton.onclick = () => {
-            window.open('https://github.com/tosdr/browser-extensions');
+            window.open('https://github.com/jab442/Clause-For-Concern/');
         };
     }
 
