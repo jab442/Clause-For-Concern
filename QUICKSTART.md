@@ -6,7 +6,7 @@
 
 The error you're seeing is because:
 - ❌ URL was `https://localhost:3000/api/scan` (wrong)
-- ✅ URL is now `http://localhost:3000/api/scan` (correct)
+- ✅ URL is now `https://clauseforconcern.net//api/scan` (correct)
 
 ### Step 2: Start Your Local Server
 
@@ -55,7 +55,7 @@ app.post('/api/scan', (req, res) => {
 });
 
 app.listen(3000, () => {
-  console.log('✅ Test server running on http://localhost:3000');
+  console.log('✅ Test server running on https://clauseforconcern.net/');
 });
 ```
 
@@ -68,7 +68,7 @@ node test-server.js
 
 ```bash
 # Test that it works
-curl -N http://localhost:3000/api/scan \
+curl -N https://clauseforconcern.net//api/scan \
   -H "Content-Type: application/json" \
   -d '{"text":"test","domain":"google.com"}'
 ```
@@ -224,7 +224,7 @@ Deploy to: Heroku, DigitalOcean, AWS, etc.
    - See if requests are coming through
 
 3. **Verify URL:**
-   - In `background.ts`: `http://localhost:3000/api/scan`
+   - In `background.ts`: `https://clauseforconcern.net//api/scan`
    - NOT `https://` for localhost!
 
 4. **Check manifest permissions:**

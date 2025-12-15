@@ -332,9 +332,9 @@ chrome.runtime.onStartup.addListener(function () {
 checkDonationReminder();
 
 // Streaming configuration
-// For local development, use: 'http://localhost:3000/api/scan'
+// For local development, use: 'https://clauseforconcern.net//api/scan'
 // For production, replace with your actual server URL
-const SERVER_ENDPOINT = 'http://localhost:3000/api/scan';
+const SERVER_ENDPOINT = 'https://clauseforconcern.net//api/scan';
 
 chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
     if (request.type === 'summarize_terms') {

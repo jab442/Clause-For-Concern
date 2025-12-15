@@ -169,7 +169,7 @@ app.listen(PORT, () => {
  *    export OPENAI_API_KEY=your_api_key_here
  * 
  * 3. Update the SERVER_ENDPOINT in background.ts to point to your server:
- *    const SERVER_ENDPOINT = 'http://localhost:3000/api/scan';
+ *    const SERVER_ENDPOINT = 'https://clauseforconcern.net//api/scan';
  * 
  * 4. Run the server:
  *    node server-example.js

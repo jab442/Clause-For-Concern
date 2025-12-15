@@ -39,7 +39,7 @@ In `src/scripts/background.ts`, update the server endpoint:
 ```typescript
 const SERVER_ENDPOINT = 'https://your-server.com/api/scan';
 // Or for local development:
-// const SERVER_ENDPOINT = 'http://localhost:3000/api/scan';
+// const SERVER_ENDPOINT = 'https://clauseforconcern.net//api/scan';
 ```
 
 ### 3. Deploy Your Server
@@ -97,7 +97,7 @@ fetch(SERVER_ENDPOINT, {
 - Check server logs for errors
 - Verify CORS headers are set correctly
 - Ensure `Transfer-Encoding: chunked` is set
-- Test the endpoint with curl: `curl -N http://localhost:3000/api/scan -d '{"text":"test"}'`
+- Test the endpoint with curl: `curl -N https://clauseforconcern.net//api/scan -d '{"text":"test"}'`
 
 **Slow responses?**
 - Check your server's network connection
@@ -109,7 +109,7 @@ fetch(SERVER_ENDPOINT, {
 
 **Development:**
 ```typescript
-const SERVER_ENDPOINT = 'http://localhost:3000/api/scan';
+const SERVER_ENDPOINT = 'https://clauseforconcern.net//api/scan';
 ```
 
 **Production:**
