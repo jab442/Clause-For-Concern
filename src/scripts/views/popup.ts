@@ -414,7 +414,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (source) {
         source.onclick = () => {
-            window.open('https://github.com/tosdr');
+            window.open('https://github.com/jab442/Clause-For-Concern');
         };
     }
 

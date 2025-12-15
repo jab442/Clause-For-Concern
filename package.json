@@ -25,11 +25,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/tosdr/browser-extensions.git"
+    "url": "git+https://github.com/jab442/Clause-For-Concern.git"
   },
   "bugs": {
-    "url": "https://github.com/tosdr/browser-extensions/issues"
+    "url": "https://github.com/jab442/Clause-For-Concern/issues"
   },
-  "homepage": "https://github.com/tosdr/browser-extensions#readme",
+  "homepage": "https://github.com/jab442/Clause-For-Concern#readme",
   "keywords": []
 }

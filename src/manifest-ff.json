@@ -3,7 +3,7 @@
     "name": "__MSG_extensionName__",
     "description": "__MSG_extensionDescription__",
     "version": "1.0",
-    "homepage_url": "https://tosdr.org",
+    "homepage_url": "https://clauseforconcern.net",
     "permissions": ["tabs", "storage"],
     "host_permissions": ["http://localhost/*", "https://*/*"],
     "background": {
