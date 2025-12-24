@@ -20,6 +20,7 @@ interface ChatContext {
     grade: string | null;
     pointList: Array<{ classification: string; title: string }>;
     aiOverview: string | null;
+    url: string | null;
 }
 
 let curatorMode = false;
@@ -31,7 +32,8 @@ let currentChatContext: ChatContext = {
     serviceName: null,
     grade: null,
     pointList: [],
-    aiOverview: null
+    aiOverview: null,
+    url: null
 };
 
 chrome.storage.local.get(['api'], function (result) {
@@ -521,10 +523,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                     loadingMessage.classList.add('assistant');
                     
                     if (newValue.done) {
+                        // Store assistant response in chat history
+                        chatHistory.push({ role: 'assistant', content: newValue.text || '' });
+                        
                         // Enable input after response is complete
                         const chatInput = document.getElementById('chatInput') as HTMLInputElement;
                         const chatSendButton = document.getElementById('chatSendButton') as HTMLButtonElement;
-                        if (chatInput) chatInput.disabled = false;
+                        if (chatInput) {
+                            chatInput.disabled = false;
+                            chatInput.focus(); // Focus input for next question
+                        }
                         if (chatSendButton) chatSendButton.disabled = false;
                         
                         // Scroll to bottom of chat
@@ -541,12 +549,52 @@ document.addEventListener('DOMContentLoaded', async () => {
     initializeChat();
 });
 
+// Store chat history for context
+let chatHistory: Array<{ role: 'user' | 'assistant'; content: string }> = [];
+
 function initializeChat(): void {
     const chatInput = document.getElementById('chatInput') as HTMLInputElement;
     const chatSendButton = document.getElementById('chatSendButton');
     const chatMessages = document.getElementById('chatMessages');
+    const chatToggle = document.getElementById('chatToggle');
+    const chatBody = document.getElementById('chatBody');
+    const chatContainer = document.getElementById('chatContainer');
     
     if (!chatInput || !chatSendButton || !chatMessages) return;
+    
+    // Clear the placeholder content
+    chatMessages.innerHTML = '';
+    
+    // Capture current URL for context
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (tabs[0]?.url) {
+            currentChatContext.url = tabs[0].url;
+        }
+    });
+    
+    // Toggle collapse/expand
+    if (chatToggle && chatBody && chatContainer) {
+        chatToggle.addEventListener('click', () => {
+            const isCollapsed = chatContainer.classList.toggle('collapsed');
+            const toggleIcon = chatToggle.querySelector('.toggle-icon');
+            if (toggleIcon) {
+                toggleIcon.innerHTML = isCollapsed ? '&#9650;' : '&#9660;';
+            }
+            // Save collapsed state
+            chrome.storage.local.set({ chatCollapsed: isCollapsed });
+        });
+        
+        // Restore collapsed state
+        chrome.storage.local.get(['chatCollapsed'], (result) => {
+            if (result.chatCollapsed) {
+                chatContainer.classList.add('collapsed');
+                const toggleIcon = chatToggle.querySelector('.toggle-icon');
+                if (toggleIcon) {
+                    toggleIcon.innerHTML = '&#9650;';
+                }
+            }
+        });
+    }
     
     const sendMessage = async () => {
         const message = chatInput.value.trim();
@@ -554,6 +602,7 @@ function initializeChat(): void {
         
         // Add user message to chat
         addChatMessage(message, 'user');
+        chatHistory.push({ role: 'user', content: message });
         chatInput.value = '';
         
         // Disable input while waiting for response
@@ -566,11 +615,14 @@ function initializeChat(): void {
         // Generate unique chat ID
         const chatId = Date.now().toString();
         
-        // Send message to background script
+        // Send message to background script with chat history for context
         chrome.runtime.sendMessage({
             type: 'chat_message',
             message: message,
-            context: currentChatContext,
+            context: {
+                ...currentChatContext,
+                chatHistory: chatHistory.slice(-10) // Include last 10 messages for context
+            },
             chatId: chatId
         });
     };
