@@ -15,9 +15,24 @@ interface DonationReminder {
     allowedPlattform: boolean;
 }
 
+interface ChatContext {
+    serviceName: string | null;
+    grade: string | null;
+    pointList: Array<{ classification: string; title: string }>;
+    aiOverview: string | null;
+}
+
 let curatorMode = false;
 let renderDonationReminder = false;
 var apiUrl = 'api.tosdr.org';
+
+// Store current context for chat
+let currentChatContext: ChatContext = {
+    serviceName: null,
+    grade: null,
+    pointList: [],
+    aiOverview: null
+};
 
 chrome.storage.local.get(['api'], function (result) {
     if (result.api && result.api.length !== 0) {
@@ -236,6 +251,14 @@ async function getServiceDetails(id: string, unverified = false) {
     const name = data.name;
     const rating = data.rating;
     const points = data.points;
+
+    // Store context for chat
+    currentChatContext.serviceName = name;
+    currentChatContext.grade = rating;
+    currentChatContext.pointList = points.map((p: any) => ({
+        classification: p.case?.classification || 'neutral',
+        title: p.title
+    }));
 
     const serviceNames = document.getElementsByClassName('serviceName');
 
@@ -478,10 +501,104 @@ document.addEventListener('DOMContentLoaded', async () => {
                     (overview as HTMLElement).style.display = 'block';
                     overview.innerHTML = `<h3>AI Overview for ${rootDomain}:</h3><p>${newValue}</p>`;
                 });
+                // Store AI overview in chat context
+                currentChatContext.aiOverview = newValue;
+                // Scroll to show AI overview top
+                const firstAiOverview = document.querySelector('.aiOverview');
+                if (firstAiOverview) {
+                    firstAiOverview.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }
+            
+            // Handle chat responses
+            if (key.startsWith('chat_response_')) {
+                const chatMessages = document.getElementById('chatMessages');
+                const loadingMessage = document.querySelector('.chat-message.loading');
+                
+                if (loadingMessage && newValue) {
+                    loadingMessage.textContent = newValue.text || '';
+                    loadingMessage.classList.remove('loading');
+                    loadingMessage.classList.add('assistant');
+                    
+                    if (newValue.done) {
+                        // Enable input after response is complete
+                        const chatInput = document.getElementById('chatInput') as HTMLInputElement;
+                        const chatSendButton = document.getElementById('chatSendButton') as HTMLButtonElement;
+                        if (chatInput) chatInput.disabled = false;
+                        if (chatSendButton) chatSendButton.disabled = false;
+                        
+                        // Scroll to bottom of chat
+                        if (chatMessages) {
+                            chatMessages.scrollTop = chatMessages.scrollHeight;
+                        }
+                    }
+                }
             }
         }
     });
+    
+    // Chat functionality
+    initializeChat();
 });
+
+function initializeChat(): void {
+    const chatInput = document.getElementById('chatInput') as HTMLInputElement;
+    const chatSendButton = document.getElementById('chatSendButton');
+    const chatMessages = document.getElementById('chatMessages');
+    
+    if (!chatInput || !chatSendButton || !chatMessages) return;
+    
+    const sendMessage = async () => {
+        const message = chatInput.value.trim();
+        if (!message) return;
+        
+        // Add user message to chat
+        addChatMessage(message, 'user');
+        chatInput.value = '';
+        
+        // Disable input while waiting for response
+        chatInput.disabled = true;
+        (chatSendButton as HTMLButtonElement).disabled = true;
+        
+        // Add loading message
+        addChatMessage('Thinking...', 'loading');
+        
+        // Generate unique chat ID
+        const chatId = Date.now().toString();
+        
+        // Send message to background script
+        chrome.runtime.sendMessage({
+            type: 'chat_message',
+            message: message,
+            context: currentChatContext,
+            chatId: chatId
+        });
+    };
+    
+    chatSendButton.addEventListener('click', sendMessage);
+    
+    chatInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            sendMessage();
+        }
+    });
+}
+
+function addChatMessage(text: string, type: 'user' | 'assistant' | 'loading'): void {
+    const chatMessages = document.getElementById('chatMessages');
+    if (!chatMessages) return;
+    
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `chat-message ${type}`;
+    messageDiv.textContent = text;
+    chatMessages.appendChild(messageDiv);
+    
+    // Show chat messages container if hidden
+    chatMessages.classList.add('has-messages');
+    
+    // Scroll to bottom
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
 
 function ifFirefoxDesktopResize(): void {
     if (

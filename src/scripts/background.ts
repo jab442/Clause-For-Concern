@@ -332,17 +332,29 @@ chrome.runtime.onStartup.addListener(function () {
 checkDonationReminder();
 
 // Streaming configuration
-// For local development, use: 'https://clauseforconcern.net//api/scan'
-// For production, replace with your actual server URL
-const SERVER_ENDPOINT = 'https://clauseforconcern.net//api/scan';
+// Server base URL - can be overridden via extension storage for local development
+// Set 'serverBaseUrl' in chrome.storage.local to 'http://localhost:3000' for local dev
+const DEFAULT_SERVER_BASE_URL = 'https://clauseforconcern.net/';
+
+async function getServerEndpoints(): Promise<{ scanEndpoint: string; chatEndpoint: string }> {
+    const result = await chrome.storage.local.get(['serverBaseUrl']);
+    const baseUrl = result.serverBaseUrl || DEFAULT_SERVER_BASE_URL;
+    // Remove trailing slash if present and add endpoints
+    const cleanBaseUrl = baseUrl.replace(/\/+$/, '');
+    return {
+        scanEndpoint: `${cleanBaseUrl}/api/scan`,
+        chatEndpoint: `${cleanBaseUrl}/api/chat`
+    };
+}
 
 chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
     if (request.type === 'summarize_terms') {
             console.log('Summarizing terms for domain:', request.domain);
             
             try {
+                const { scanEndpoint } = await getServerEndpoints();
                 // Call your server endpoint that streams the response
-                const response = await fetch(SERVER_ENDPOINT, {
+                const response = await fetch(scanEndpoint, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -401,5 +413,84 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
                     [`ai_summary_${request.domain}`]: helpMessage
                 });
             }
+    }
+    
+    if (request.type === 'chat_message') {
+        console.log('Chat message received:', request.message);
+        
+        try {
+            const { chatEndpoint } = await getServerEndpoints();
+            // Call the chat endpoint that streams the response
+            const response = await fetch(chatEndpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    message: request.message,
+                    context: request.context
+                })
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Chat server error response:', errorText);
+                throw new Error(`Server error (${response.status}): ${errorText}`);
+            }
+
+            // Read the stream
+            const reader = response.body?.getReader();
+            if (!reader) {
+                throw new Error('Response body is not readable');
+            }
+
+            const decoder = new TextDecoder();
+            let accumulatedText = '';
+            const chatId = request.chatId;
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                
+                // Decode the chunk and append to accumulated text
+                const chunk = decoder.decode(value, { stream: true });
+                accumulatedText += chunk;
+                
+                // Update storage with the accumulated text so far (this triggers UI updates)
+                chrome.storage.local.set({ 
+                    [`chat_response_${chatId}`]: { 
+                        text: accumulatedText, 
+                        done: false 
+                    }
+                });
+            }
+
+            // Final update with complete text
+            chrome.storage.local.set({ 
+                [`chat_response_${chatId}`]: { 
+                    text: accumulatedText, 
+                    done: true 
+                }
+            });
+
+        } catch (error) {
+            let errorMsg = 'Unknown error';
+            if (typeof error === 'string') errorMsg = error;
+            else if (error && typeof error === 'object' && 'message' in error) errorMsg = (error as any).message;
+            console.error('Chat error: ' + errorMsg);
+            
+            // Provide helpful error message
+            const helpMessage = errorMsg.includes('Failed to fetch') 
+                ? `Server not available. Please try again later.`
+                : `Error: ${errorMsg}`;
+            
+            chrome.storage.local.set({ 
+                [`chat_response_${request.chatId}`]: { 
+                    text: helpMessage, 
+                    done: true, 
+                    error: true 
+                }
+            });
+        }
     }
 });

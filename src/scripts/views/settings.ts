@@ -6,6 +6,7 @@ const curatorModeInput = document.getElementById('curatorMode') as HTMLInputElem
 const apiInput = document.getElementById('api') as HTMLInputElement;
 const openAIInput = document.getElementById('openai') as HTMLInputElement;
 const aiPromptInput = document.getElementById('aiPrompt') as HTMLInputElement;
+const serverBaseUrlInput = document.getElementById('serverBaseUrl') as HTMLInputElement;
 
 
 chrome.storage.local.get(
@@ -19,7 +20,8 @@ chrome.storage.local.get(
         'sentry',
         'api',
         'openai',
-        'aiPrompt'
+        'aiPrompt',
+        'serverBaseUrl'
     ],
     function (result) {
         if (result.db) {
@@ -62,6 +64,12 @@ chrome.storage.local.get(
         if( result.aiPrompt) {
             if (result.aiPrompt.length !== 0) {
                 aiPromptInput.value = result.aiPrompt;
+            }
+        }
+
+        if (result.serverBaseUrl) {
+            if (result.serverBaseUrl.length !== 0) {
+                serverBaseUrlInput.value = result.serverBaseUrl;
             }
         }
 
@@ -130,6 +138,22 @@ aiPromptInput.addEventListener('change', function () {
             console.log('AI prompt has been changed.');
         }
     );
+});
+
+serverBaseUrlInput.addEventListener('change', function () {
+    const value = serverBaseUrlInput.value.trim();
+    if (value.length === 0) {
+        chrome.storage.local.remove('serverBaseUrl', function () {
+            console.log('Server base URL has been reset to default.');
+        });
+    } else {
+        chrome.storage.local.set(
+            { serverBaseUrl: value },
+            function () {
+                console.log('Server base URL has been changed to: ' + value);
+            }
+        );
+    }
 });
 
 // telemetryInput.addEventListener('change', function () {

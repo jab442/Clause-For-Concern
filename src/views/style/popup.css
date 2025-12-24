@@ -394,3 +394,137 @@ button {
     margin-bottom: .5rem;
     line-height: 1;
 }
+
+/* Chat Container Styles */
+.chat-container {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #ffffff;
+    border-top: 1px solid #e0e0e0;
+    padding: 10px;
+    z-index: 100;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.chat-messages {
+    max-height: 150px;
+    overflow-y: auto;
+    margin-bottom: 10px;
+    padding: 5px;
+    display: none;
+}
+
+.chat-messages.has-messages {
+    display: block;
+}
+
+.chat-message {
+    padding: 8px 12px;
+    margin: 5px 0;
+    border-radius: 12px;
+    max-width: 85%;
+    word-wrap: break-word;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.chat-message.user {
+    background: #3684fd;
+    color: white;
+    margin-left: auto;
+    text-align: right;
+}
+
+.chat-message.assistant {
+    background: #f0f0f0;
+    color: #333;
+    margin-right: auto;
+}
+
+.chat-message.loading {
+    background: #f0f0f0;
+    color: #666;
+    font-style: italic;
+}
+
+.chat-input-wrapper {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.chat-input {
+    flex: 1;
+    padding: 10px 15px;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.chat-input:focus {
+    border-color: #3684fd;
+}
+
+.chat-send-button {
+    background: #3684fd;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+}
+
+.chat-send-button:hover {
+    background: #2a6fd6;
+}
+
+.chat-send-button:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+.chat-send-button img {
+    width: 20px;
+    height: 20px;
+    filter: brightness(0) invert(1);
+}
+
+/* Add padding at bottom to account for fixed chat container */
+body {
+    padding-bottom: 80px;
+}
+
+/* Dark mode chat styles */
+.dark-mode .chat-container {
+    background: #1c1c1e;
+    border-top: 1px solid #333;
+}
+
+.dark-mode .chat-input {
+    background: #2c2c2e;
+    border-color: #444;
+    color: #fff;
+}
+
+.dark-mode .chat-input:focus {
+    border-color: #3684fd;
+}
+
+.dark-mode .chat-message.assistant {
+    background: #2c2c2e;
+    color: #fff;
+}
+
+.dark-mode .chat-message.loading {
+    background: #2c2c2e;
+    color: #aaa;
+}
